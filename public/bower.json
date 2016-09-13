@@ -1,0 +1,20 @@
+{
+  "name": "public",
+  "homepage": "https://github.com/alteredtastes/mongo-nunjucks-gcloud",
+  "authors": [
+    "alexander \"sandy\" gilfillan <alexander.l.gilfillan@gmail.com>"
+  ],
+  "description": "",
+  "main": "",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "^3.1.0"
+  }
+}
