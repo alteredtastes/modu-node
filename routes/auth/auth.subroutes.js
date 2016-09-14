@@ -17,8 +17,8 @@ module.exports.github = {
 }
 
 module.exports.google = {
-  oauth: require('./google/oauth'),
-  api: require('./google/api')
+  api: require('./google/api'),
+  oauth: require('./google/oauth')
 }
 
 module.exports.jwtutility = require('./jwt.utility');

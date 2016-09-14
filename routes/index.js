@@ -5,36 +5,6 @@ var auth = require('./auth/auth.subroutes');
 var org = require('./org/org.subroutes.js');
 var user = require('./user/user.subroutes');
 
-//TESTING MONGODB EXTRACT TO EXCEL
-// var datapumps = require('datapumps');
-// router.get('/datapumps', (req, res) => {
-//   var Pump = datapumps.Pump,
-//   MongodbMixin = datapumps.mixin.MongodbMixin,
-//   ExcelWriterMixin = datapumps.mixin.ExcelWriterMixin,
-//   pump = new Pump();
-//
-//   pump
-//   .mixin(MongodbMixin('mongodb://localhost/moma-dev'))
-//   .useCollection('works')
-//   .from(pump.find({ title: "Yankee Hotel Foxtrot" }))
-//
-//   .mixin(ExcelWriterMixin())
-//   .createWorkbook('/tmp/MomaWorks.xlsx')
-//   .createWorksheet('Works')
-//   .writeHeaders(['_id', 'title' ,'__v'])
-//
-//   .process(function(works) {
-//     return pump.writeRow([ works._id, works.title, works.__v ]);
-//   })
-//   .logErrorsToConsole()
-//   .run()
-//     .then(function() {
-//       console.log("Done writing contacts to file");
-//     });
-//
-//   res.render('index.njk');
-// });
-
 router.get('/', (req, res) => {res.render('index.njk');});
 
 /*API*/

@@ -8,6 +8,7 @@ var bodyParser = require('body-parser');
 var bluebird = require('bluebird');
 var nunjucks = require('nunjucks');
 var mongoose = require('mongoose');
+var cors = require('cors');
 
 var routes = require('./routes/index');
 
@@ -40,6 +41,13 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(cors());
+
+app.use(function(req, res, next) {
+  res.header('Access-Control-Allow-Origin', req.headers.origin);
+  res.header('Access-Control-Allow-Headers', 'Authorization');
+  next();
+});
 
 app.use('/', routes);
 

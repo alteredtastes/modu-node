@@ -1,11 +1,11 @@
 require('dotenv').load();
 var jwt = require('jsonwebtoken');
 
-function createJWT(user) {
-  var token = jwt.sign(user, process.env.APP_SECRET, {
+function createJWT(payload) {
+  // delete user.password;
+  return jwt.sign(payload, process.env.APP_SECRET, {
     expiresIn: 60
   });
-  return token;
 }
 
 function verifyJWT() {
@@ -31,6 +31,6 @@ function verifyJWT() {
 }
 
 module.exports = {
-  createJWT: createJWT,
-  verifyJWT: verifyJWT
+  createJWT,
+  verifyJWT
 }
