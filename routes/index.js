@@ -34,6 +34,9 @@ router.post('/org/moma/artists', /*auth.jwtutility.verifyJWT(), */org.moma.artis
 router.put('/org/moma/artist/:id', /*auth.jwtutility.verifyJWT(), */org.moma.artist.updateArtist);
 router.delete('/org/moma/artists/:id', /*auth.jwtutility.verifyJWT(), */org.moma.artist.deleteArtist);
 
+    /*API TESTING*/
+router.get('/org/moma/artist/google/selections', auth.jwtutility.verifyJWT(), org.moma.artist.selections);
+
     /*work*/
 router.get('/org/moma/works', /*auth.jwtutility.verifyJWT(), */org.moma.work.findWorks);
 router.get('/org/moma/work/:id', /*auth.jwtutility.verifyJWT(), */org.moma.work.findWorkById);

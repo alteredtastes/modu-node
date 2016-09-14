@@ -19,9 +19,10 @@ function api(req, res, next, access_token, refresh_token) {
 
       var payload = { name, email };
       var token = auth.jwtutility.createJWT(payload, process.env.APP_SECRET);
-      res.json({
-        email, name, token, data
-      });
+      res.redirect('/org/moma/artist/selections?token=' + token);
+      // res.json({
+      //   email, name, token, data
+      // });
     })
     .catch(function(err) {
       res.json({

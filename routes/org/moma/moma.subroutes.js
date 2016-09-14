@@ -3,7 +3,8 @@ module.exports.artist = {
   findArtistById: require('./artist/find.artist.by.id'),
   insertArtist: require('./artist/insert.artist'),
   updateArtist: require('./artist/update.artist'),
-  deleteArtist: require('./artist/delete.artist')
+  deleteArtist: require('./artist/delete.artist'),
+  selections: require('./artist/selections')
 }
 
 module.exports.work = {
