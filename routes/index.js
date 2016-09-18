@@ -24,6 +24,11 @@ router.get('/auth/github', auth.github.redirect);
 router.get('/auth/github/callback', auth.github.callback);
 router.get('/auth/google', auth.google.oauth.redirect);
 router.get('/auth/google/callback', auth.google.oauth.callback);
+router.get('/auth/google/refresh', function(req, res, next) {
+  res.json({
+    message: 'inside the refresh response'
+  })
+});
 
 /*ORG*/
   /*moma*/

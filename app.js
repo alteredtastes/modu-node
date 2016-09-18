@@ -9,6 +9,7 @@ var bluebird = require('bluebird');
 var nunjucks = require('nunjucks');
 var mongoose = require('mongoose');
 var cors = require('cors');
+require('dotenv').load();
 
 var routes = require('./routes/index');
 
