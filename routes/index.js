@@ -22,13 +22,13 @@ router.get('/auth/facebook', auth.facebook.redirect);
 router.get('/auth/facebook/callback', auth.facebook.callback);
 router.get('/auth/github', auth.github.redirect);
 router.get('/auth/github/callback', auth.github.callback);
-router.get('/auth/google', auth.google.oauth.redirect);
+router.get('/auth/google', auth.google.oauth.state('oauth'), auth.google.oauth.redirect);
 router.get('/auth/google/callback', auth.google.oauth.callback);
-router.get('/auth/google/refresh', function(req, res, next) {
-  res.json({
-    message: 'inside the refresh response'
-  })
-});
+
+router.get('/calendar', auth.google.oauth.state('calendar'), auth.google.oauth.redirect);
+router.get('/calendar/callback', auth.google.oauth.callback, function(req, res, next) {
+  console.log('this is the state', req.body.error.errors);
+})
 
 /*ORG*/
   /*moma*/

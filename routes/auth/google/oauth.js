@@ -1,16 +1,28 @@
 var rp = require('request-promise');
-var needle = require('needle'); //using NEEDLE because REQUEST/REQUEST-PROMISE is brrrrrrrokennn!
+var needle = require('needle'); //using needle because request/request-promise is breaking
 var api = require('./api.js');
 
 function redirect(req, res, next) {
-  var url = 'https://accounts.google.com/o/oauth2/v2/auth?';
-  var scope = 'scope=email%20profile&';
-  var state = req.state ? ('state=' + req.state + '&') : ('state=none&'); //add a state in middleware calls, it will be in callback query param
-  var redirect_uri = 'redirect_uri=' + process.env.GOOGLE_REDIRECT_URL + '&';
-  var response_type = 'response_type=code&';
-  // var approval_prompt = 'approval_prompt=force&'; //CAREFUL! Forces refresh token to generate every time, but Google limits number of refresh tokens allowed.
-  var client_id = 'client_id=' + process.env.GOOGLE_CLIENT_ID + '&';
-  res.redirect(url + scope + state + redirect_uri + response_type/* + approval_prompt*/ + client_id);
+  /*FILTER OUT SCOPES BY STATE HERE*/
+  var scope;
+  if(!req.state) { console.log('no state added via middleware for redirect!');}
+  if(req.state === 'oauth') scope = 'scope=email%20profile'
+  if(req.state === 'calendar') scope = 'scope=https://www.googleapis.com/auth/calendar.readonly'
+  var url = 'https://accounts.google.com/o/oauth2/v2/auth';
+  var state = req.state ? ('state=' + req.state) : '';
+  var redirect_uri = 'redirect_uri=' + process.env['GOOGLE_' + req.state.toUpperCase() + '_REDIRECT'];
+  var qstrings = [
+    scope,
+    state,
+    redirect_uri,
+    'response_type=code',
+    /*'approval_prompt=force',*/
+    'client_id=' + process.env.GOOGLE_CLIENT_ID
+  ];
+  for (var i = 0; i < qstrings.length - 1; i++) {
+    qstrings[i] += '&';
+  }
+  res.redirect(url + '?' + qstrings.join(''));
 }
 
 function callback(req, res, next) {
@@ -28,19 +40,48 @@ function callback(req, res, next) {
     code: req.query.code,
     client_id: process.env.GOOGLE_CLIENT_ID,
     client_secret: process.env.GOOGLE_CLIENT_SECRET,
-    redirect_uri: process.env.GOOGLE_REDIRECT_URL,
+    redirect_uri: process.env['GOOGLE_' + req.query.state + '_REDIRECT'],
     grant_type: 'authorization_code',
-    include_granted_scopes: true,
+    // include_granted_scopes: true,
     json: true
   }
   needle.post('https://www.googleapis.com/oauth2/v4/token', body, options, function(err, resp) {
-    console.log(req.query.state);
-    needle.get('https://www.googleapis.com/plus/v1/people/me?access_token=' + resp.body.access_token, function (err, resp) {
-      res.json({
-        body: resp.body
+    /*OAUTH ROUTE GETS RES, API CALLS GET NEXT*/
+    if(req.query.state === 'oauth') {
+      needle.get('https://www.googleapis.com/plus/v1/people/me?access_token=' + resp.body.access_token, function (err, resp) {
+        res.json({
+          body: resp.body
+        });
       });
-    });
+    }
+
+    if(req.query.state === 'calendar') {
+      needle.get('https://www.googleapis.com/calendar/v3/users/me/calendarList?access_token=' + resp.body.access_token, function (err, resp) {
+        req.body = resp.body;
+        next();
+      });
+    }
+
+    if(req.query.state === 'somethingelse') {
+      needle.get('someotherurl?access_token=' + resp.body.access_token, function (err, resp) {
+        req.body = resp.body;
+        next();
+      });
+    }
   });
+}
+
+function state(val) {
+  return function(req, res, next) {
+    req.state = val;
+    next();
+  }
+}
+
+module.exports = {
+  redirect,
+  callback,
+  state
 }
 
 // function refresh(req, res, next) {
@@ -73,11 +114,6 @@ function callback(req, res, next) {
 //   })
 // }
 
-module.exports = {
-  redirect,
-  callback
-  // refresh
-}
 
 /*USING REQUEST PROMISE (currently broken)*/
 // function callback(req, res, next) {
@@ -116,7 +152,7 @@ module.exports = {
 // var oauth2Client = new OAuth2(
 //   process.env.GOOGLE_CLIENT_ID,
 //   process.env.GOOGLE_CLIENT_SECRET,
-//   process.env.GOOGLE_REDIRECT_URL
+//   process.env.GOOGLE_OAUTH_REDIRECT
 // );
 
 // var scopes = [
