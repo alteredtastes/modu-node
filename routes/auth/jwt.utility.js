@@ -4,7 +4,7 @@ var jwt = require('jsonwebtoken');
 function createJWT(payload) {
   // delete user.password;
   return jwt.sign(payload, process.env.APP_SECRET, {
-    expiresIn: 60
+    expiresIn: '10m'
   });
 }
 
@@ -15,14 +15,21 @@ function verifyJWT() {
     if (token) {
       jwt.verify(token, process.env.APP_SECRET, function(err, decoded) {
         if (err) {
-          return res.json({ success: false, message: 'Failed to authenticate token.' });
+          console.log(err);
+          res.json({ success: false, message: 'Failed to authenticate token.' });
         } else {
           req.decoded = decoded;
-          next();
+          if(req.path === '/') {
+            res.redirect('/users/' + req.decoded.username + '/dashboard?token=' + token);
+          } else {
+            next();
+          }
         }
       });
+    } else if (!token && req.path === '/') {
+      res.render('index.njk');
     } else {
-      return res.status(403).send({
+      res.status(403).send({
           success: false,
           message: 'No token provided.'
       });
