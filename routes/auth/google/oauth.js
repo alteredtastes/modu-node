@@ -7,7 +7,8 @@ function redirect(req, res, next) {
   var scope;
   if(!req.state) { console.log('no state added via middleware for redirect!');}
   if(req.state === 'oauth') scope = 'scope=email%20profile'
-  if(req.state === 'calendar') scope = 'scope=https://www.googleapis.com/auth/calendar.readonly'
+  if(req.state === 'calendar') scope = 'scope=https://www.googleapis.com/auth/calendar'
+
   var url = 'https://accounts.google.com/o/oauth2/v2/auth';
   var state = req.state ? ('state=' + req.state) : '';
   var redirect_uri = 'redirect_uri=' + process.env['GOOGLE_' + req.state.toUpperCase() + '_REDIRECT'];
@@ -40,34 +41,33 @@ function callback(req, res, next) {
     code: req.query.code,
     client_id: process.env.GOOGLE_CLIENT_ID,
     client_secret: process.env.GOOGLE_CLIENT_SECRET,
-    redirect_uri: process.env['GOOGLE_' + req.query.state + '_REDIRECT'],
+    redirect_uri: process.env['GOOGLE_' + req.query.state.toUpperCase() + '_REDIRECT'],
     grant_type: 'authorization_code',
     // include_granted_scopes: true,
     json: true
   }
+  var apiCalls = {
+    oauth: 'https://www.googleapis.com/plus/v1/people/me',
+    calendar: 'https://www.googleapis.com/calendar/v3/users/me/calendarList'
+  }
   needle.post('https://www.googleapis.com/oauth2/v4/token', body, options, function(err, resp) {
-    /*OAUTH ROUTE GETS RES, API CALLS GET NEXT*/
-    if(req.query.state === 'oauth') {
-      needle.get('https://www.googleapis.com/plus/v1/people/me?access_token=' + resp.body.access_token, function (err, resp) {
-        res.json({
-          body: resp.body
-        });
-      });
-    }
+    needle.get(apiCalls[req.query.state] + '?access_token=' + resp.body.access_token, function(err, response) {
+      // req.data = data;
+      //create token here, then redirect to / with a token. Redirect will redirect to /:user/dashboard
+      console.log('this is the response.body', response.body);
+      res.json(response.body)
+    })
 
-    if(req.query.state === 'calendar') {
-      needle.get('https://www.googleapis.com/calendar/v3/users/me/calendarList?access_token=' + resp.body.access_token, function (err, resp) {
-        req.body = resp.body;
-        next();
-      });
-    }
+    // if(req.query.state === 'calendar') {
+    //   needle.get(, {headers: {Authorization: 'Bearer ' + resp.body.access_token}}, function (err, response) {
+    //     req.api.data = resp.body;
+    //     res.json({
+    //       body: response.body
+    //     });
+    //     next();
+    //   });
+    // }
 
-    if(req.query.state === 'somethingelse') {
-      needle.get('someotherurl?access_token=' + resp.body.access_token, function (err, resp) {
-        req.body = resp.body;
-        next();
-      });
-    }
   });
 }
 

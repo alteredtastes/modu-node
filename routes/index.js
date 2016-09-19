@@ -27,7 +27,7 @@ router.get('/auth/google/callback', auth.google.oauth.callback);
 
 router.get('/calendar', auth.google.oauth.state('calendar'), auth.google.oauth.redirect);
 router.get('/calendar/callback', auth.google.oauth.callback, function(req, res, next) {
-  console.log('this is the state', req.body.error.errors);
+  console.log('this is the state'/*, req.api[req.query.state]*/);
 })
 
 /*ORG*/
