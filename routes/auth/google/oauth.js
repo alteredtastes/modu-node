@@ -4,16 +4,18 @@ var api = require('./api.js');
 
 function redirect(req, res, next) {
   /*FILTER OUT SCOPES BY STATE HERE*/
-  var scope;
-  if(!req.state) { console.log('no state added via middleware for redirect!');}
-  if(req.state === 'oauth') scope = 'scope=email%20profile'
-  if(req.state === 'calendar') scope = 'scope=https://www.googleapis.com/auth/calendar'
-
+  if(!req.query.state) {
+    console.log('no state added via middleware for redirect!');
+  }
+  var scopes = {
+    oauth: 'scope=email%20profile',
+    calendar: 'scope=https://www.googleapis.com/auth/calendar'
+  }
   var url = 'https://accounts.google.com/o/oauth2/v2/auth';
-  var state = req.state ? ('state=' + req.state) : '';
-  var redirect_uri = 'redirect_uri=' + process.env['GOOGLE_' + req.state.toUpperCase() + '_REDIRECT'];
+  var state = req.query.state ? ('state=' + req.query.state) : '';
+  var redirect_uri = 'redirect_uri=' + process.env['GOOGLE_' + req.query.state.toUpperCase() + '_REDIRECT'];
   var qstrings = [
-    scope,
+    scopes[req.query.state],
     state,
     redirect_uri,
     'response_type=code',
@@ -51,29 +53,20 @@ function callback(req, res, next) {
     calendar: 'https://www.googleapis.com/calendar/v3/users/me/calendarList'
   }
   needle.post('https://www.googleapis.com/oauth2/v4/token', body, options, function(err, resp) {
-    needle.get(apiCalls[req.query.state] + '?access_token=' + resp.body.access_token, function(err, response) {
+    options.headers.Authorization = 'Bearer ' + resp.body.access_token;
+    needle.get(apiCalls[req.query.state], options, function(err, response) {
       // req.data = data;
       //create token here, then redirect to / with a token. Redirect will redirect to /:user/dashboard
       console.log('this is the response.body', response.body);
       res.json(response.body)
     })
 
-    // if(req.query.state === 'calendar') {
-    //   needle.get(, {headers: {Authorization: 'Bearer ' + resp.body.access_token}}, function (err, response) {
-    //     req.api.data = resp.body;
-    //     res.json({
-    //       body: response.body
-    //     });
-    //     next();
-    //   });
-    // }
-
   });
 }
 
 function state(val) {
   return function(req, res, next) {
-    req.state = val;
+    req.query.state = val;
     next();
   }
 }
