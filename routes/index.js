@@ -4,6 +4,7 @@ var api = require('./api/api.subroutes');
 var auth = require('./auth/auth.subroutes');
 var org = require('./org/org.subroutes.js');
 var user = require('./user/user.subroutes');
+var needle = require('needle');
 
 router.get('/', (req, res) => {res.render('index.njk');});
 
@@ -23,11 +24,19 @@ router.get('/auth/facebook/callback', auth.facebook.callback);
 router.get('/auth/github', auth.github.redirect);
 router.get('/auth/github/callback', auth.github.callback);
 router.get('/auth/google', auth.google.oauth.state('oauth'), auth.google.oauth.redirect);
-router.get('/auth/google/callback', auth.google.oauth.callback);
+router.get('/auth/google/callback', auth.google.oauth.callback, function(req, res, next) {
+  needle.get(req.apiUrls[req.query.state], req.callOptions, function(err, response) {
+    req.googleData = response.body;
+    res.json(req.googleData);
+  });
+});
 
 router.get('/calendar', auth.google.oauth.state('calendar'), auth.google.oauth.redirect);
 router.get('/calendar/callback', auth.google.oauth.callback, function(req, res, next) {
   console.log('this is the state'/*, req.api[req.query.state]*/);
+  res.json({
+    message: 'you got to the calendar callback'
+  })
 })
 
 /*ORG*/

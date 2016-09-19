@@ -2,10 +2,17 @@ var rp = require('request-promise');
 var needle = require('needle'); //using needle because request/request-promise is breaking
 var api = require('./api.js');
 
+function state(val) {
+  return function(req, res, next) {
+    req.query.state = val;
+    next();
+  }
+}
+
 function redirect(req, res, next) {
   /*FILTER OUT SCOPES BY STATE HERE*/
   if(!req.query.state) {
-    console.log('no state added via middleware for redirect!');
+    console.log('no state added via middleware!');
   }
   var scopes = {
     oauth: 'scope=email%20profile',
@@ -34,12 +41,12 @@ function callback(req, res, next) {
       error: req.query.error
     });
   }
-  var options = {
+  req.callOptions = {
     headers: {
       'content-type': 'application/x-www-form-urlencoded'
     }
   }
-  var body = {
+  req.apiPost = {
     code: req.query.code,
     client_id: process.env.GOOGLE_CLIENT_ID,
     client_secret: process.env.GOOGLE_CLIENT_SECRET,
@@ -48,27 +55,14 @@ function callback(req, res, next) {
     // include_granted_scopes: true,
     json: true
   }
-  var apiCalls = {
+  req.apiUrls = {
     oauth: 'https://www.googleapis.com/plus/v1/people/me',
     calendar: 'https://www.googleapis.com/calendar/v3/users/me/calendarList'
   }
-  needle.post('https://www.googleapis.com/oauth2/v4/token', body, options, function(err, resp) {
-    options.headers.Authorization = 'Bearer ' + resp.body.access_token;
-    needle.get(apiCalls[req.query.state], options, function(err, response) {
-      // req.data = data;
-      //create token here, then redirect to / with a token. Redirect will redirect to /:user/dashboard
-      console.log('this is the response.body', response.body);
-      res.json(response.body)
-    })
-
-  });
-}
-
-function state(val) {
-  return function(req, res, next) {
-    req.query.state = val;
+  needle.post('https://www.googleapis.com/oauth2/v4/token', req.apiPost, req.callOptions, function(err, resp) {
+    req.callOptions.headers.Authorization = 'Bearer ' + resp.body.access_token;
     next();
-  }
+  });
 }
 
 module.exports = {
