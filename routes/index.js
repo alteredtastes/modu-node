@@ -34,8 +34,8 @@ router.get('/calendar/callback', auth.google.oauth.callback, function(req, res, 
   console.log('this is the state'/*, req.api[req.query.state]*/);
   res.json({
     message: 'you got to the calendar callback'
-  })
-})
+  });
+});
 
 /*ORG*/
   /*moma*/
