@@ -17,7 +17,7 @@ module.exports.github = {
 }
 
 module.exports.google = {
-  api: require('./google/api'),
+  login: require('./google/login'),
   oauth: require('./google/oauth')
 }
 

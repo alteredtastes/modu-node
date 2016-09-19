@@ -18,18 +18,16 @@ router.post('/auth/login', auth.local.login);
 router.get('/auth/register', (req, res) => {res.render('register.njk');});
 router.post('/auth/register', auth.local.register);
 
-  /*oauth*/
+  /*oauth login*/
 router.get('/auth/facebook', auth.facebook.redirect);
 router.get('/auth/facebook/callback', auth.facebook.callback);
 router.get('/auth/github', auth.github.redirect);
 router.get('/auth/github/callback', auth.github.callback);
 router.get('/auth/google', auth.google.oauth.state('oauth'), auth.google.oauth.redirect);
-router.get('/auth/google/callback', auth.google.oauth.callback, function(req, res, next) {
-  needle.get(req.apiUrls[req.query.state], req.callOptions, function(err, response) {
-    req.googleData = response.body;
-    res.json(req.googleData);
-  });
-});
+router.get('/auth/google/callback', auth.google.oauth.callback, auth.google.login);
+
+/*USER*/
+router.get('/users/:user/dashboard', auth.jwtutility.verifyJWT(), user.getUserDash);
 
 router.get('/calendar', auth.google.oauth.state('calendar'), auth.google.oauth.redirect);
 router.get('/calendar/callback', auth.google.oauth.callback, function(req, res, next) {
@@ -59,7 +57,5 @@ router.put('/org/moma/work/:id', /*auth.jwtutility.verifyJWT(), */org.moma.work.
 router.delete('/org/moma/works/:id', /*auth.jwtutility.verifyJWT(), */org.moma.work.deleteWork);
 
 /*USER*/
-router.get('/users/:user/dashboard', /*auth.jwtutility.verifyJWT(), */user.getUserDash);
-router.get('/users', /*auth.jwtutility.verifyJWT(), */user.findUsers);
 
 module.exports = router;

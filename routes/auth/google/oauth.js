@@ -1,6 +1,5 @@
 var rp = require('request-promise');
 var needle = require('needle'); //using needle because request/request-promise is breaking
-var api = require('./api.js');
 
 function state(val) {
   return function(req, res, next) {

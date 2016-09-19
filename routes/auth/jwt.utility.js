@@ -18,7 +18,6 @@ function verifyJWT() {
           return res.json({ success: false, message: 'Failed to authenticate token.' });
         } else {
           req.decoded = decoded;
-          console.log('this is the REQ', decoded);
           next();
         }
       });
