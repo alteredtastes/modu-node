@@ -15,7 +15,8 @@ function redirect(req, res, next) {
   }
   var scopes = {
     oauth: 'scope=email%20profile',
-    calendar: 'scope=https://www.googleapis.com/auth/calendar'
+    calendar: 'scope=https://www.googleapis.com/auth/calendar',
+
   }
   var url = 'https://accounts.google.com/o/oauth2/v2/auth';
   var state = req.query.state ? ('state=' + req.query.state) : '';
@@ -25,7 +26,8 @@ function redirect(req, res, next) {
     state,
     redirect_uri,
     'response_type=code',
-    /*'approval_prompt=force',*/
+    // 'access_type=offline',
+    // 'approval_prompt=force',
     'client_id=' + process.env.GOOGLE_CLIENT_ID
   ];
   for (var i = 0; i < qstrings.length - 1; i++) {
@@ -59,6 +61,7 @@ function callback(req, res, next) {
     calendar: 'https://www.googleapis.com/calendar/v3/users/me/calendarList'
   }
   needle.post('https://www.googleapis.com/oauth2/v4/token', req.apiPost, req.callOptions, function(err, resp) {
+    console.log('SAVE THE REFRESH TOKEN! = ', resp.body);
     req.callOptions.headers.Authorization = 'Bearer ' + resp.body.access_token;
     next();
   });
