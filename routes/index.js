@@ -6,7 +6,7 @@ var org = require('./org/org.subroutes.js');
 var user = require('./user/user.subroutes');
 var needle = require('needle');
 
-router.get('/', auth.jwtutility.verifyJWT()/*,(req, res) => {res.render('index.njk');}*/);
+router.get('/', auth.jwtutility.verifyJWT());
 
 /*API*/
 router.get('/api', /*auth.jwt.verifyJWT(), */api.getSomething);
