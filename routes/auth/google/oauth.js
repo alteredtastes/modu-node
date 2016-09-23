@@ -1,23 +1,45 @@
 var rp = require('request-promise');
 var needle = require('needle'); //using needle because request/request-promise is breaking
+var auth = require('../auth.subroutes.js');
 
 function state(val) {
   return function(req, res, next) {
-    req.query.state = val;
-    next();
+    if(val === 'offline') {
+      req.query.state = val;
+      callback(req, res, next);
+    } else {
+      var payload = {};
+      payload.state = val;
+      payload.user = req.query.user || null;
+      req.query.state = auth.createJWT(payload);
+      next();
+    }
   }
 }
 
 function redirect(req, res, next) {
-  /*FILTER OUT SCOPES BY STATE HERE*/
+  /* OAUTH REUSE FOR BEST PRACTICE
+It is considered a best user-experience practice to request authorization for
+resources at the time you need them. For example, an app that lets people sample
+music tracks and create mixes might need very few resources at sign-in time,
+perhaps nothing more than the name of the person signing in. However, saving a
+completed mix would require access to their Google Drive. Most people would find it
+natural if they only were asked for access to their Google Drive at the
+time the app actually needed it.
+TAKEAWAY -> Request different scopes at different routes. Allow multiple
+uses of the full redirect/callback flow because scopes are requested FIRST in the redirect,
+and not later with a refresh token.
+  */
+
   if(!req.query.state) {
-    console.log('no state added via middleware!');
+    console.log('no state added via middleware! use the state query to renew the scope/token for new api calls');
   }
+
   var scopes = {
     oauth: 'scope=email%20profile',
-    calendar: 'scope=https://www.googleapis.com/auth/calendar',
-
+    calendar: 'scope=https://www.googleapis.com/auth/calendar'
   }
+
   var url = 'https://accounts.google.com/o/oauth2/v2/auth';
   var state = req.query.state ? ('state=' + req.query.state) : '';
   var redirect_uri = 'redirect_uri=' + process.env['GOOGLE_' + req.query.state.toUpperCase() + '_REDIRECT'];
@@ -26,8 +48,8 @@ function redirect(req, res, next) {
     state,
     redirect_uri,
     'response_type=code',
-    // 'access_type=offline',
-    // 'approval_prompt=force',
+    // 'access_type=offline', //gets refresh token. comes only on first login.
+    // 'approval_prompt=force', //force gets new refresh token on each login. limited usage.
     'client_id=' + process.env.GOOGLE_CLIENT_ID
   ];
   for (var i = 0; i < qstrings.length - 1; i++) {
@@ -37,31 +59,41 @@ function redirect(req, res, next) {
 }
 
 function callback(req, res, next) {
-  if(req.query.error) {
-    res.json({
-      error: req.query.error
-    });
+  if(req.query.error) {res.json({error: req.query.error};)}
+  if(!req.query.state) {res.json({error: 'no state included!'};)}
+
+  if(req.query.refresh_token) {
+    //save refresh token for 'offline' state calls!
+    //refresh should come only the first time oauth runs
   }
+
+  req.apiPost = {};
+  if(req.query.state === 'offline') {
+    // use req.query.user to get
+    // refresh token from database!
+    req.apiPost.refresh_token = token;
+    req.apiPost.grant_type = 'refresh_token';
+  } else {
+    req.query.state = auth.jwtutility.verifyJWT();
+    req.apiPost.code = req.query.code;
+    req.apiPost.redirect_uri = process.env['GOOGLE_' + req.query.state.toUpperCase() + '_REDIRECT'];
+    req.apiPost.grant_type = 'authorization_code';
+  }
+  req.apiPost.client_id = process.env.GOOGLE_CLIENT_ID;
+  req.apiPost.client_secret = process.env.GOOGLE_CLIENT_SECRET;
+  req.apiPost.include_granted_scopes = true;
+  req.apiPost.json = true;
   req.callOptions = {
     headers: {
       'content-type': 'application/x-www-form-urlencoded'
     }
   }
-  req.apiPost = {
-    code: req.query.code,
-    client_id: process.env.GOOGLE_CLIENT_ID,
-    client_secret: process.env.GOOGLE_CLIENT_SECRET,
-    redirect_uri: process.env['GOOGLE_' + req.query.state.toUpperCase() + '_REDIRECT'],
-    grant_type: 'authorization_code',
-    // include_granted_scopes: true,
-    json: true
-  }
+
   req.apiUrls = {
     oauth: 'https://www.googleapis.com/plus/v1/people/me',
     calendar: 'https://www.googleapis.com/calendar/v3/users/me/calendarList'
   }
   needle.post('https://www.googleapis.com/oauth2/v4/token', req.apiPost, req.callOptions, function(err, resp) {
-    console.log('SAVE THE REFRESH TOKEN! = ', resp.body);
     req.callOptions.headers.Authorization = 'Bearer ' + resp.body.access_token;
     next();
   });

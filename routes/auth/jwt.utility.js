@@ -10,7 +10,7 @@ function createJWT(payload) {
 
 function verifyJWT() {
   return function(req, res, next) {
-    var token = req.body.token || req.query.token || req.headers['x-access-token'];
+    var token = req.body.token || req.query.token || req.headers['x-access-token'] || req.query.state;
     if(!token) {
       /*
       SPA OPTION:
@@ -26,13 +26,15 @@ function verifyJWT() {
           res.json({ success: false, message: 'Failed to authenticate token.' });
           RENDER OPTIONS:
           res.render('index.njk');*/
-          res.redirect('/auth/login'); /*res.render('login.njk')*/
+          res.redirect('/auth/login');/* OR res.render('login.njk')*/
+        } else if (decoded.state) {
+          return decoded.state;
         } else {
           req.decoded = decoded;
           if(req.path === '/') {
             res.redirect('/users/' + req.decoded.username + '/dashboard?token=' + token);
           } else {
-            next(); // FORWARD TO AN OAUTH LOGIN FUNCTION
+            next(); //FORWARDS TO OAUTH LOGIN CALLBACKS AND/OR DASHBOARD.
           }
         }
       });

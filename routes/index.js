@@ -29,13 +29,12 @@ router.get('/auth/google/callback', auth.google.oauth.callback, auth.google.logi
 /*USER*/
 router.get('/users/:user/dashboard', auth.jwtutility.verifyJWT(), user.getUserDash);
 
-router.get('/calendar', auth.google.oauth.state('calendar'), auth.google.oauth.redirect);
-router.get('/calendar/callback', auth.google.oauth.callback, function(req, res, next) {
-  console.log('this is the state'/*, req.api[req.query.state]*/);
-  res.json({
-    message: 'you got to the calendar callback'
-  });
-});
+// incremental auth flow uses redirect/callback to request new scopes as they are needed
+router.get('/users/:user/calendar', auth.google.oauth.state('calendar'), auth.google.oauth.redirect);
+router.get('/users/calendar/callback', auth.google.oauth.callback, auth.google.newScopeReceived);
+
+// this route automatically runs the callback function after finding refresh token by user param
+router.get('/users/:user/offline', auth.google.oauth.state('offline'), user.usedARefreshToken)
 
 /*ORG*/
   /*moma*/
