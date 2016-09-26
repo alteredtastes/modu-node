@@ -29,6 +29,7 @@ function verifyJWT() {
           res.render('index.njk');*/
           res.redirect('/auth/login');/* OR res.render('login.njk')*/
         } else if (decoded.state) {
+          //verifies state jwt for api callback flows
           req.query.state = decoded.state;
           next();
         } else {

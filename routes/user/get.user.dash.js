@@ -3,6 +3,7 @@ var User = accountModels.user;
 
 function getUserDash(req, res, next) {
   res.json({
+    message: 'this is getUserDash',
     payload: req.decoded
   });
 }
