@@ -24,17 +24,17 @@ router.get('/auth/facebook/callback', auth.facebook.callback);
 router.get('/auth/github', auth.github.redirect);
 router.get('/auth/github/callback', auth.github.callback);
 router.get('/auth/google', auth.google.oauth.state('oauth'), auth.google.oauth.redirect);
-router.get('/auth/google/callback', auth.google.oauth.callback, auth.google.login);
+router.get('/auth/google/callback', auth.jwtutility.verifyJWT(), auth.google.oauth.callback, auth.google.login);
 
 /*USER*/
 router.get('/users/:user/dashboard', auth.jwtutility.verifyJWT(), user.getUserDash);
 
 // incremental auth flow uses redirect/callback to request new scopes as they are needed
 router.get('/users/:user/calendar', auth.google.oauth.state('calendar'), auth.google.oauth.redirect);
-router.get('/users/calendar/callback', auth.google.oauth.callback, auth.google.newScopeReceived);
+// router.get('/users/calendar/callback', auth.google.oauth.callback, auth.google.newScopeReceived);
 
 // this route automatically runs the callback function after finding refresh token by user param
-router.get('/users/:user/offline', auth.google.oauth.state('offline'), user.usedARefreshToken)
+// router.get('/users/:user/offline', auth.google.oauth.state('offline'), user.usedARefreshToken)
 
 /*ORG*/
   /*moma*/

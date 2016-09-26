@@ -11,6 +11,7 @@ function createJWT(payload) {
 function verifyJWT() {
   return function(req, res, next) {
     var token = req.body.token || req.query.token || req.headers['x-access-token'] || req.query.state;
+
     if(!token) {
       /*
       SPA OPTION:
@@ -28,7 +29,8 @@ function verifyJWT() {
           res.render('index.njk');*/
           res.redirect('/auth/login');/* OR res.render('login.njk')*/
         } else if (decoded.state) {
-          return decoded.state;
+          req.query.state = decoded.state;
+          next();
         } else {
           req.decoded = decoded;
           if(req.path === '/') {

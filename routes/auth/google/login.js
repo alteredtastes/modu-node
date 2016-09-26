@@ -3,6 +3,7 @@ var needle = require('needle');
 var auth = require('../auth.subroutes');
 
 function login(req, res, next) {
+  console.log('this is the state ', req.query.state);
   needle.get(req.apiUrls[req.query.state], req.callOptions, function(err, response) {
     /*DATABASE*/
     req.googleData = response.body;

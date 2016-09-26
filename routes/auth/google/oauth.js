@@ -1,6 +1,6 @@
 var rp = require('request-promise');
 var needle = require('needle'); //using needle because request/request-promise is breaking
-var auth = require('../auth.subroutes.js');
+var auth = require('../auth.subroutes');
 
 function state(val) {
   return function(req, res, next) {
@@ -8,10 +8,11 @@ function state(val) {
       req.query.state = val;
       callback(req, res, next);
     } else {
+      req.query.scopes = val;
       var payload = {};
       payload.state = val;
       payload.user = req.query.user || null;
-      req.query.state = auth.createJWT(payload);
+      req.query.state = auth.jwtutility.createJWT(payload);
       next();
     }
   }
@@ -42,14 +43,15 @@ and not later with a refresh token.
 
   var url = 'https://accounts.google.com/o/oauth2/v2/auth';
   var state = req.query.state ? ('state=' + req.query.state) : '';
-  var redirect_uri = 'redirect_uri=' + process.env['GOOGLE_' + req.query.state.toUpperCase() + '_REDIRECT'];
+  // var redirect_uri = 'redirect_uri=' + process.env['GOOGLE_' + req.query.state.toUpperCase() + '_REDIRECT'];
+  var redirect_uri = 'redirect_uri=' + process.env.GOOGLE_REDIRECT;
   var qstrings = [
-    scopes[req.query.state],
+    scopes[req.query.scopes],
     state,
     redirect_uri,
     'response_type=code',
-    // 'access_type=offline', //gets refresh token. comes only on first login.
-    // 'approval_prompt=force', //force gets new refresh token on each login. limited usage.
+    'access_type=offline', //gets refresh token. comes only on first login.
+    // 'approval_prompt=force', //force gets new refresh token on each login. limited usage!
     'client_id=' + process.env.GOOGLE_CLIENT_ID
   ];
   for (var i = 0; i < qstrings.length - 1; i++) {
@@ -59,12 +61,13 @@ and not later with a refresh token.
 }
 
 function callback(req, res, next) {
-  if(req.query.error) {res.json({error: req.query.error};)}
-  if(!req.query.state) {res.json({error: 'no state included!'};)}
+  if(req.query.error) {res.json({error: req.query.error})}
+  if(!req.query.state) {res.json({error: 'no state included!'})}
 
   if(req.query.refresh_token) {
-    //save refresh token for 'offline' state calls!
+    //save refresh token. enables 'offline' state calls.
     //refresh should come only the first time oauth runs
+    //should only occur on 'oath' state
   }
 
   req.apiPost = {};
@@ -74,9 +77,9 @@ function callback(req, res, next) {
     req.apiPost.refresh_token = token;
     req.apiPost.grant_type = 'refresh_token';
   } else {
-    req.query.state = auth.jwtutility.verifyJWT();
     req.apiPost.code = req.query.code;
-    req.apiPost.redirect_uri = process.env['GOOGLE_' + req.query.state.toUpperCase() + '_REDIRECT'];
+    req.apiPost.redirect_uri = process.env.GOOGLE_REDIRECT;
+    // req.apiPost.redirect_uri = process.env['GOOGLE_' + req.query.state.toUpperCase() + '_REDIRECT'];
     req.apiPost.grant_type = 'authorization_code';
   }
   req.apiPost.client_id = process.env.GOOGLE_CLIENT_ID;
@@ -93,6 +96,7 @@ function callback(req, res, next) {
     oauth: 'https://www.googleapis.com/plus/v1/people/me',
     calendar: 'https://www.googleapis.com/calendar/v3/users/me/calendarList'
   }
+
   needle.post('https://www.googleapis.com/oauth2/v4/token', req.apiPost, req.callOptions, function(err, resp) {
     req.callOptions.headers.Authorization = 'Bearer ' + resp.body.access_token;
     next();
@@ -173,7 +177,7 @@ module.exports = {
 // var oauth2Client = new OAuth2(
 //   process.env.GOOGLE_CLIENT_ID,
 //   process.env.GOOGLE_CLIENT_SECRET,
-//   process.env.GOOGLE_OAUTH_REDIRECT
+//   process.env.GOOGLE_REDIRECT
 // );
 
 // var scopes = [
