@@ -35,8 +35,10 @@ function login(req, res, next) {
     var payload = {
       id: '1029385710923857',
       username: username,
-      note: 'this is a completely new user who logged in with google oauth'
+      note: 'this is a completely new user who logged in with google oauth',
+      test_route: 'http://localhost:3000/users/calendar?user=' + username
     }
+    //possible to redirect with token, but not as query or param??
     var token = auth.jwtutility.createJWT(payload)
     res.redirect('/users/' + username + '/dashboard?token=' + token);
   });
