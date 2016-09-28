@@ -47,7 +47,7 @@ function verifyJWT() {
       jwt.verify(token, process.env.APP_SECRET, function(err, decoded) {
         if (err) {
           console.log('TOKEN ERROR!');
-          res.redirect('/auth/login');/* OR res.render('login.njk')*/
+          res.redirect('/auth/login');
         } else {
           req.decoded = decoded;
           if(req.path === '/') {
