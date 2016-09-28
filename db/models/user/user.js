@@ -5,16 +5,17 @@ var userSchema = new Schema({
   local: {
     email: {type: String, unique: true},
     password: String,
+    id: String,
     orgId: String,
     role: String
   },
   google : {
     id : String,
-    refreshToken: String,
+    token: String,
     email: String,
     name: String
   }
-  ,
+  // ,
   // facebook : {
   //   id : String,
   //   token: String,
