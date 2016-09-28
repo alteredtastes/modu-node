@@ -33,7 +33,7 @@ function login(req, res, next) {
           var user = gmail.substring(0, gmail.indexOf('@'));
 
     /*ROUTE TESTING*/
-    var testJWT = auth.jwtutility.createJWT({reqPath: req.path});
+    var testJWT = auth.jwtutility.createJWT({createdIn: 'auth.google.login', reqPath: req.path});
     var payload = {};
     payload.id = '1029385710923857';
     payload.user = req.query.user || req.params.user || user || null;
