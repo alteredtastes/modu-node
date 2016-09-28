@@ -30,17 +30,19 @@ function login(req, res, next) {
           >>SAVE GMAIL AS LOCAL EMAIL AND GMAIL SUBSTRING AS LOCAL USERNAME
           >>CREATE JWT WITH LOCAL USERNAME AND EMAIL*/
           var gmail = req.googleData.emails[0].value
-          var username = gmail.substring(0, gmail.indexOf('@'));
+          var user = gmail.substring(0, gmail.indexOf('@'));
 
-    var payload = {
-      id: '1029385710923857',
-      username: username,
-      note: 'this is a completely new user who logged in with google oauth',
-      test_route: 'http://localhost:3000/users/calendar?user=' + username
-    }
-    //possible to redirect with token, but not as query or param??
-    var token = auth.jwtutility.createJWT(payload)
-    res.redirect('/users/' + username + '/dashboard?token=' + token);
+    /*ROUTE TESTING*/
+    var testJWT = auth.jwtutility.createJWT({reqPath: req.path});
+    var payload = {};
+    payload.id = '1029385710923857';
+    payload.user = req.query.user || req.params.user || user || null;
+    payload.note = 'this is a completely new user who logged in with google oauth';
+    payload.createdIn = 'auth.google.login.js';
+    payload.test_route = process.env.DEV_HOST + '/users/resource?user=' + payload.user + '&token=' + testJWT;
+    var token = auth.jwtutility.createJWT(payload);
+
+    res.redirect('/users/' + payload.user + '/dashboard?token=' + token);
   });
 }
 

@@ -29,23 +29,23 @@ using a code.
 
   var scopes = {
     oauth: 'scope=email%20profile',
-    calendar: 'scope=https://www.googleapis.com/auth/calendar'
+    resource: 'scope=https://www.googleapis.com/auth/calendar'
   }
 
   var payload = {};
   payload.state = req.query.state;
-  payload.user = req.query.user || null;
-  var state = req.query.state ? ('state=' + auth.jwtutility.createJWT(payload)) : '';
+  payload.user = req.query.user || req.params.user || null;
+  var stateJWT = req.query.state ? ('state=' + auth.jwtutility.encryptState(payload)) : '';
 
   var url = 'https://accounts.google.com/o/oauth2/v2/auth';
   var redirect_uri = 'redirect_uri=' + process.env['GOOGLE_' + req.query.state.toUpperCase() + '_REDIRECT'];
   // var redirect_uri = 'redirect_uri=' + process.env.GOOGLE_REDIRECT;
   var qstrings = [
     scopes[req.query.state],
-    state,
+    stateJWT,
     redirect_uri,
     'response_type=code',
-    'access_type=online', //gets refresh token. comes only on first login.
+    'access_type=online', //'offline' gets refresh token. comes only on first login.
     // 'approval_prompt=force', //force gets new refresh token on each login. limited usage!
     'client_id=' + process.env.GOOGLE_CLIENT_ID
   ];
@@ -60,7 +60,7 @@ using a code.
 
 function callback(req, res, next) {
 
-  /*REQ.QUERY.CODE EXISTS IN THIS FUNCTION*/
+  /*REQ.QUERY.CODE EXISTS FOR THIS FUNCTION*/
 
   if(req.query.error) {res.json({error: req.query.error})}
   if(!req.query.state) {res.json({error: 'no state included!'})}
@@ -89,19 +89,19 @@ function callback(req, res, next) {
     req.apiPost.grant_type = 'authorization_code';
   }
 
-  /*THESE DATA ACCESS URLS ARE CHOSEN BY REQ.QUERY.STATE IN NEXT ROUTE FUNCTION*/
+  /*THESE DATA ACCESS URLS ARE CHOSEN BY REQ.QUERY.STATE AFTER THIS MIDDLEWARE*/
   req.apiUrls = {
     oauth: 'https://www.googleapis.com/plus/v1/people/me',
-    calendar: 'https://www.googleapis.com/calendar/v3/users/me/calendarList',
+    resource: 'https://www.googleapis.com/calendar/v3/users/me/calendarList',
     drive: 'some api urls use an api key ' + process.env.GOOGLE_API_KEY
   }
 
-  /*CODE OR REFRESH TOKEN GETS USED IN THIS CALL*/
+  /*CODE OR REFRESH TOKEN CONFIGURATIONS GET USED IN THIS CALL*/
   needle.post('https://www.googleapis.com/oauth2/v4/token', req.apiPost, req.callOptions, function(err, resp) {
 
-    /*IF USER'S FIRST LOGIN*/
+    /*IF FIRST LOGIN FOR USER OR USER RE-ALLOWS ACCESS*/
     if(req.query.refresh_token) {
-      /*SAVE THE REFRESH TOKEN*/
+      /*UPDATE THE USER'S REFRESH TOKEN IN DATABASE*/
     }
 
     req.callOptions.headers.Authorization = 'Bearer ' + resp.body.access_token;
@@ -131,7 +131,7 @@ module.exports = {
 //         client_secret: process.env.GOOGLE_CLIENT_SECRET,
 //         refresh_token: refresh_token,
 //         grant_type: 'refresh_token',
-//         scope: 'https://www.googleapis.com/auth/calendar'
+//         scope: 'https://www.googleapis.com/auth/resource'
 //       },
 //       json: true
 //     }
@@ -189,7 +189,7 @@ module.exports = {
 // var scopes = [
 //   'https://www.googleapis.com/auth/userinfo.email',
 //   'https://www.googleapis.com/auth/userinfo.profile',
-//   // 'https://www.googleapis.com/auth/calendar',
+//   // 'https://www.googleapis.com/auth/resource',
 //   'https://www.googleapis.com/auth/plus.me'
 // ];
 // function redirect(req, res, next) {

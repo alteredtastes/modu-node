@@ -30,18 +30,16 @@ router.get('/auth/github/callback', auth.github.callback);
 
   /*oauth GOOGLE*/
 router.get('/auth/google', auth.google.oauth.state('oauth'), auth.google.oauth.redirect);
-router.get('/auth/google/callback', auth.jwtutility.verifyJWT(), auth.google.oauth.callback, auth.google.login);
-
-
-
-/*USER*/
+router.get('/auth/google/callback', auth.jwtutility.decryptState(), auth.google.oauth.callback, auth.google.login);
 router.get('/users/:user/dashboard', auth.jwtutility.verifyJWT(), user.getUserDash);
 
-  /* calendar */ /* GOOGLE API example - incremental auth flow uses redirect/callback to request new scopes as they are needed*/
+/*USER*/
+
+  /* resource */ /* GOOGLE API example - incremental auth flow uses redirect/callback to request new scopes as they are needed*/
   /*auth state gets set in first route middleware route, configures the scopes to request, */
-router.get('/users/calendar', auth.google.oauth.state('calendar'), auth.google.oauth.redirect);
-router.get('/users/calendar/callback', auth.jwtutility.verifyJWT(), auth.google.oauth.callback, user.calendar.getApiCalendars);
-// router.get('/users/:user/calendar', auth.jwtutility.verifyJWT(), user.calendar.getCalendars);
+router.get('/users/resource', auth.jwtutility.verifyJWT(), auth.google.oauth.state('resource'), auth.google.oauth.redirect);
+router.get('/users/resource/callback', auth.jwtutility.decryptState(), auth.google.oauth.callback, user.resource.getApiResources);
+router.get('/users/:user/resources', auth.jwtutility.verifyJWT(), user.resource.getResources);
 
 
 // this route automatically runs the callback function after finding refresh token by user param

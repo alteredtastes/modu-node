@@ -4,5 +4,5 @@ module.exports = {
   getUserDash: require('./get.user.dash'),
 
   //user subdirectories
-  calendar: require('./calendar/calendar.subroutes.js')
+  resource: require('./resource/resource.subroutes.js')
 }
